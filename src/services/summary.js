@@ -5,7 +5,7 @@
 const VAPI_API_BASE = 'https://api.vapi.ai';
 const NBT_BACKEND_API = 'https://nbt-backend.vercel.app/api/conversation';
 const NBT_TEXT_API = 'https://nbt-backend.vercel.app/api/text';
-const BEARER_TOKEN = '00ad2e7c-1cde-4b39-867a-7570d3579307';
+const BEARER_TOKEN = '9929210d-c21b-4616-a816-e7c5caef6d5b';
 
 /**
  * Sleep function for retry delays
