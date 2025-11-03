@@ -86,29 +86,38 @@ export default function ChatInterface() {
 
     vapiInstance.on("message", (message) => {
       console.log("Message from assistant:", message);
-      if (message.type === "transcript" && message.transcriptType === "final") {
-        if (message.role === "user") {
-          updateLastMessage(message.transcript, "user");
-        } else if (message.role === "assistant") {
-          updateLastAIMessage(message.transcript);
 
-          // 🔹 Detect closing phrase from AI
-          if (
-            message.transcript.toLowerCase().includes("assessment completed")
-          ) {
-            addMessage(
-              "✅ The assessment is now complete. Thank you for your participation!",
-              "system"
-            );
+      // Handle final user speech
+      if (
+        message.type === "transcript" &&
+        message.transcriptType === "final" &&
+        message.role === "user"
+      ) {
+        updateLastMessage(message.transcript, "user");
+        return;
+      }
 
-            // Gracefully end the call and navigate to summary
-            setTimeout(() => {
-              vapiInstance.stop();
-              setCallStatus("ended");
-              setIsMicOn(false);
-              setIsConnecting(false);
-            }, 2000);
-          }
+      // Handle final assistant speech
+      if (
+        message.type === "transcript" &&
+        message.transcriptType === "final" &&
+        message.role === "assistant"
+      ) {
+        updateLastAIMessage(message.transcript);
+
+        // Detect closing phrase
+        if (message.transcript.toLowerCase().includes("assessment completed")) {
+          addMessage(
+            "✅ The assessment is now complete. Thank you for your participation!",
+            "system"
+          );
+
+          setTimeout(() => {
+            vapiInstance.stop();
+            setCallStatus("ended");
+            setIsMicOn(false);
+            setIsConnecting(false);
+          }, 2000);
         }
       }
     });
@@ -220,7 +229,8 @@ export default function ChatInterface() {
       return filteredMessages;
     });
   };
-  const startCall = async () => {
+  const startCall = async (language = "English") => {
+    const selectedLanguage = language;
     if (!vapi) return;
 
     setIsConnecting(true);
@@ -244,7 +254,7 @@ export default function ChatInterface() {
           provider: "11labs",
           stability: 0.7, // slightly calmer
           similarityBoost: 0.6, // softer tone matching
-          speakingRate: 0.93, // slower tempo (~5% slower)
+          speakingRate: 0.6, // slower tempo (~40% slower)
           pitch: -0.8, // slightly flatter pitch
         },
       };
@@ -270,10 +280,10 @@ export default function ChatInterface() {
         //     textNormalizationEnabled: true
         // },
 
-        voice: detectedLanguage === 'Kannada' 
-        ? voiceConfig.kannada 
-        : voiceConfig.englishHindi,
-
+        voice:
+          detectedLanguage === "Kannada"
+            ? voiceConfig.kannada
+            : voiceConfig.englishHindi,
 
         model: {
           model: "gpt-4o-mini",
@@ -303,12 +313,14 @@ Whenever you speak Kannada, always use Kannada script (Unicode characters), not 
 - You end the session with a heartfelt, empathetic message based on the parent’s responses.
 - You pause and reflect briefly after each response before continuing.
 - When you finish one sentence and start another, imagine a short pause (about 0.3 seconds), but do not add words like ‘pause’ or ellipses.
+- Keep each sentence short and properly ended with a period or question mark. 
+- Do not write long, continuous sentences; pause naturally between ideas.
 - Keep each spoken response within 2-3 sentences.
 - You remember all previous answers and quietly use the tool "postAnswers"…
 
 # Language-specific voice behavior
 - You speak in English, Hindi, or Kannada — whichever the parent uses.
-- When speaking Kannada, respond naturally using Kannada script (not English transliteration). 
+- When speaking Kannada, respond naturally using Kannada script (not English transliteration). Don't speak too fast.
 - Avoid adding extra punctuation or stretching words for emotion; let the voice tone express warmth.
 - Keep responses concise and conversational — do not intentionally slow down or elongate speech.
 
@@ -375,6 +387,19 @@ Finally, say exactly this phrase to signal the end of the session:
 
       const callResponse = await vapi.start(assistant);
       console.log("Call started successfully:", callResponse);
+
+      //kannada warmup
+      // Kannada voice warm-up (pre-prime prosody)
+      if (selectedLanguage === "Kannada") {
+        console.log("Priming Kannada voice...");
+        await vapi.send({
+          type: "add-message",
+          message: {
+            role: "assistant",
+            content: "ನಮಸ್ಕಾರ!", // short Kannada greeting to warm up TTS
+          },
+        });
+      }
 
       // Store the call ID for navigation
       if (callResponse && callResponse.id) {
