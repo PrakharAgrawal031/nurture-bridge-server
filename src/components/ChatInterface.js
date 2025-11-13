@@ -53,7 +53,7 @@ export default function ChatInterface() {
 
   // Initialize VAPI
   useEffect(() => {
-    const vapiInstance = new Vapi("5414e0b9-021c-4c09-83f5-10a46f23ecef");
+    const vapiInstance = new Vapi("85251dcb-30ed-4e37-8a16-35e3566d73de");
     setVapi(vapiInstance);
 
     // Set up event listeners
